@@ -1,0 +1,31 @@
+<?php 
+ // Add Some Code Here for design
+
+?>
+<div style="width:100%; border-bottom: 1px solid #98AFC7">
+	<b style = ""> Your current point :</b>
+</div>
+<div>
+	<br>
+	Points balance: <?php echo $block->getCustomerRewardPoint(); ?><br>
+
+	Total earned: <?php echo $block->getAllEarning(); ?><br>
+
+	Total spent: <?php echo -$block->getAllSpending(); ?><br>
+</div>
+
+<div style="width:100%; border-bottom: 1px solid #98AFC7">
+	<br>
+	<b style = ""> Exchange rate :</b>
+
+</div>
+<br>
+for each <?php echo (int)$block->getExchangeRate(); ?> reward point you will receive 1$
+<br>
+
+
+<div style="width:100%; border-bottom: 1px solid #98AFC7">
+	<br>
+	<b style = ""> Transaction :</b>
+	<br>
+</div>

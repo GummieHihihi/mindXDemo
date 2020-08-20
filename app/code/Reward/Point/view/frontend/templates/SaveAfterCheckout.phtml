@@ -1,0 +1,106 @@
+<?php
+// block : Reward\Point\Block\Frontend\Checkout\EarningRules
+//this block also save the transasction
+
+
+$gethighestrules = $block->getHighestRules();
+$currentCustomer = null;
+//get customer information
+$customerCollection = $block->getCustomerCollection();
+foreach ($customerCollection as $customer) {
+	$customerEntity = $block->getCustomerId();
+	if($customerEntity == $customer->getEntityId()){
+		$currentCustomer = $customer;
+		break;
+	}
+}
+// var_dump($gethighestrules);
+// die();
+// if there is at least 1 rule in earning rules
+if($block->getHighestRules())
+{
+	if($gethighestrules['type'] == 'give'){
+		$receivePoint = (int)$block->getHighestRules()['receive_point'];
+		$pointGet = $receivePoint;
+	//save to db
+		$total = $block->addGiveRewardPoint($receivePoint);
+		echo "<p>you have just earn $receivePoint reward point</p>";
+	}
+	else{
+	//earn point for customer
+		$receivePoint = (int)$block->getHighestRules()['receive_point'];
+		$spentAmount = $block->getHighestRules()['spent_amount'];
+		$exchangeRate = $spentAmount/$receivePoint;
+		$pointGet = $block->getTempTotal()[0]['total']/$exchangeRate;
+	//save to database 
+		$total = $block->addGiveRewardPoint($pointGet);
+		$block->saveTemp((int)$block->getTotal(),1);
+		echo "<p>you have just earn $pointGet reward point</p>";
+	}
+	$customerEntity = $block->getCustomerId();
+	$customerName = $currentCustomer->getName();
+	$customerMail = $currentCustomer->getEmail();
+// if the customer use reward point
+	$changePoint = $pointGet;
+	$balance = $block->getCustomerRewardPoint();
+	$point_expire = 0;
+	$website = "Main Website";
+	$createdBy = "Customer";
+	$notee = "regular change";
+	$transactionDate = date('Y-m-d');
+	$expires_date = date('Y-m-d');
+	$type = 'normal transaction';
+	$block->saveToTransaction($customerEntity, $customerName,$customerMail,$changePoint,$balance,$point_expire,$website,$createdBy,$notee,$transactionDate,$expires_date,$type);
+//done making earning transaction
+}
+
+$spendPoint = $block->getSessionData("point");
+//this section is if the customer spend point
+if($spendPoint != 0)
+{
+	$changePoint = -$spendPoint;
+	echo "<h3>You have just spend $spendPoint reward point</h3>";
+	$block->minusRewardPoint($spendPoint);
+	$currentpoint = $block->getCustomerRewardPoint();
+
+	echo "<h3>You now have $currentpoint reward point</h3>";
+	//save to transaction in db after the customer spend point 
+	//start saving data to transaction table 
+	$customerEntity = $block->getCustomerId();
+	$customerName = $currentCustomer->getName();
+	$customerMail = $currentCustomer->getEmail();
+// if the customer use reward point
+	$balance = $block->getCustomerRewardPoint();
+	$point_expire = 0;
+	$website = "Main Website";
+	$createdBy = "Customer";
+	$notee = "customer spent  ";
+	$transactionDate = date('Y-m-d');
+	$expires_date = date('Y-m-d');
+	$type = 'normal transaction';
+
+//save in db
+	$block->saveToTransaction($customerEntity, $customerName,$customerMail,$changePoint,$balance,$point_expire,$website,$createdBy,$notee,$transactionDate,$expires_date,$type);
+	// set session of the discount information to -> 0 
+}
+// if the customer didnt use the reward point
+else
+{
+	
+	$customerPoint = $block->getCustomerRewardPoint();
+	echo "<h3>Now you have $customerPoint reward point in your account</h3>";
+}
+
+
+//save the discount money for the invoice section if customer use check out
+$billId = $block->getBillId();
+if($block->getSessionData("money")){
+	$money = $block->getSessionData("money");
+
+	$block->saveDiscount2Invoice($billId, $money);
+}
+
+//save session data back to 
+$block->setSessionData('money', 0);
+$block->setSessionData('point', 0);
+?>
